@@ -35,4 +35,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initQuizScreen();
   initResultScreen();
   initChallengeScreen();
+  initSync();        // 클라우드 자동 저장 (sync.js): 로그인돼 있으면 클라우드와 맞춤
 });

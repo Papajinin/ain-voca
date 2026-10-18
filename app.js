@@ -146,6 +146,8 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) { console.warn(e); }
+  // 클라우드 자동 저장 (sync.js). 로그인하지 않았으면 기록만 남기고 아무것도 보내지 않음
+  if (typeof onLocalStateSaved === "function") onLocalStateSaved();
 }
 
 function parseEmbeddedDatabase() {

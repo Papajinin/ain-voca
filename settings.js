@@ -10,6 +10,7 @@ function initSettingsScreen() {
     document.getElementById("setting-voice-speed").value = state.ttsSpeed;
     document.getElementById("lbl-voice-speed").textContent = `${state.ttsSpeed}x`;
     document.getElementById("setting-auto-dark").checked = state.autoDark;
+    if (typeof renderCloudStatus === "function") renderCloudStatus();   // 자동 저장 칸 (sync.js)
 
     document.querySelectorAll(".btn-wpd").forEach(b => {
       const c = parseInt(b.getAttribute("data-count"), 10);

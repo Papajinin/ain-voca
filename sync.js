@@ -1,7 +1,8 @@
 // ==========================================================
 // sync.js : 클라우드 자동 저장 (Firebase 구글 로그인 + Firestore)
 //  - 설정 화면의 "자동 저장 (클라우드)" 칸
-//  - 로그인하면: 앱을 열 때 클라우드와 맞추고, 진도가 바뀔 때마다 몇 초 뒤 자동 저장
+//  - 로그인하면: 앱을 열 때와 다시 화면에 나타날 때 클라우드와 맞추고, 진도가 바뀔 때마다 몇 초 뒤 자동 저장
+//    (다른 기기에서 공부한 진도를 옛 진도로 덮어쓰지 않도록, 돌아올 때마다 클라우드를 먼저 확인)
 //  - 폰에도 예전처럼 저장(localStorage)하므로 로그인하지 않아도, 인터넷이 끊겨도 앱은 그대로 동작
 //  - 클라우드 위치: users/{로그인한 사람 uid} 문서 하나 (state 를 글자로 통째로 저장)
 //  - 누가 쓸 수 있는지는 Firebase 관리 화면의 Firestore "규칙"에서 정합니다 (이메일 목록)
@@ -27,6 +28,7 @@ let cloudUser = null;
 let cloudReady = false;      // 앱을 연 뒤 클라우드와 맞추기가 끝났는지 (끝나야 자동 저장 시작)
 let cloudChecking = false;
 let cloudTimer = null;
+let cloudUploadPromise = null;   // 보내는 중인 저장 (다시 확인하기 전에 끝나길 기다림)
 let cloudStatus = "off";     // off | checking | pending | saving | saved | error | offline | choosing
 let cloudErrorText = "";
 let pendingCloudChoice = null;
@@ -161,7 +163,7 @@ function uploadCloudState() {
   const now = Date.now();
   const payload = cloudPayloadState();
   setCloudStatus("saving");
-  return cloudDb.collection("users").doc(uid).set({
+  const p = cloudDb.collection("users").doc(uid).set({
     state: JSON.stringify(payload),
     clientUpdatedAt: now,
     summary: progressSummary(payload),
@@ -177,6 +179,22 @@ function uploadCloudState() {
   }).catch(err => {
     console.warn(err);
     setCloudStatus(err.code === "permission-denied" ? "error" : (navigator.onLine === false ? "offline" : "error"), err);
+  }).then(() => { if (cloudUploadPromise === p) cloudUploadPromise = null; });
+  cloudUploadPromise = p;
+  return p;
+}
+
+// 앱이 다시 화면에 나타날 때: 그사이 다른 기기에서 바뀌었는지 클라우드를 다시 확인
+// (기다리던 저장은 기록에 남아 있다가 확인 결과에 따라 올리거나 선택 창으로)
+function recheckCloudOnResume() {
+  if (!cloudUser || !cloudDb || cloudChecking || pendingCloudChoice) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = null;
+  cloudReady = false;          // 확인이 끝날 때까지 자동 저장은 기록만
+  cloudChecking = true;
+  (cloudUploadPromise || Promise.resolve()).then(() => {
+    cloudChecking = false;
+    runInitialCloudSync();
   });
 }
 
@@ -311,8 +329,9 @@ function initSync() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       if (cloudTimer) uploadCloudState();
-    } else if (cloudUser && !cloudReady) {
-      runInitialCloudSync();
+    } else if (cloudUser) {
+      if (cloudReady) recheckCloudOnResume();
+      else runInitialCloudSync();
     }
   });
   window.addEventListener("online", () => {

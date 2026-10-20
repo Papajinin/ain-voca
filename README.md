@@ -1,4 +1,4 @@
-# AIN 영단어 — 관리 안내서
+# AIN Voca — 관리 안내서
 
 Oxford 5000 기반 영어 단어 학습 웹앱입니다. GitHub Pages로 배포하고, 아이폰 Safari에서 "홈 화면에 추가"해 앱처럼 사용합니다.
 
@@ -28,7 +28,7 @@ Oxford 5000 기반 영어 단어 학습 웹앱입니다. GitHub Pages로 배포�
 | `settings.js` | ⑨ 설정 화면 (테마, 세트 크기, 음성, 백업/복원/초기화) |
 | `sync.js` | 클라우드 자동 저장 (구글 로그인, Firebase). 12번 항목 참고 |
 | `main.js` | 앱 시작 순서 (가장 마지막에 실행) |
-| `apple-touch-icon.png` | 홈 화면 아이콘(책 4권 "Word") · 시작 화면 가운데 그림 |
+| `apple-touch-icon.png` | 홈 화면 아이콘(책 4권 "Voca") · 시작 화면 가운데 그림 |
 | `volleyball.png` | 시작 화면에서 굴러가는 배구공 |
 | `README.md` | 이 안내서 |
 

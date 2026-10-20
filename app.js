@@ -230,11 +230,11 @@ function switchView(viewId) {
 
   if (viewId === "view-categories" || viewId === "view-challenge" || viewId === "view-puzzle") {
     backCatBtn.classList.add("hidden");
-    mainTitle.innerHTML = `<span>AIN</span><span class="theme-primary-text">영단어</span>`;
+    mainTitle.innerHTML = `<span>AIN</span><span class="theme-primary-text">Voca</span>`;
   } else if (viewId === "view-home") {
     // 좁은 화면에서 줄바꿈되지 않도록: "(A1 명사)"는 아래 진도 카드에 있으므로 헤더에서는 생략
     backCatBtn.classList.remove("hidden");
-    mainTitle.innerHTML = `<span>AIN</span><span class="theme-primary-text">영단어</span>`;
+    mainTitle.innerHTML = `<span>AIN</span><span class="theme-primary-text">Voca</span>`;
   } else {
     backCatBtn.classList.add("hidden");
   }

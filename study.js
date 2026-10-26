@@ -1,5 +1,5 @@
 // ==========================================================
-// study.js : ④ 단어학습 화면 (카드형 / 목록형)
+// study.js : ④ 단어학습 화면 (카드형 / 목록형 / 짝맞추기)
 // 클리어한 Day(현재 모드 기준)는 하단 버튼이 [복습 테스트 / 복습 게임] 2개로 바뀝니다.
 // ==========================================================
 
@@ -29,26 +29,25 @@ function openStudyView(dayNumber) {
   switchView("view-study");
 }
 
+// 보기 방식 탭: 카드형 / 목록형 / 짝맞추기(match.js)
+const STUDY_TAB_ON = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-white theme-primary-bg shadow-sm";
+const STUDY_TAB_OFF = "flex-1 py-1.5 text-xs font-bold rounded-lg transition theme-sub-text";
+
 function setStudyMode(mode) {
   studyDisplayMode = mode;
-  const btnCard = document.getElementById("btn-study-view-card");
-  const btnList = document.getElementById("btn-study-view-list");
-  const areaCard = document.getElementById("study-area-card");
-  const areaList = document.getElementById("study-area-list");
+  stopMatch(); // 게임 중에 탭을 바꾸면 멈춤
+  const tabs = { card: "btn-study-view-card", list: "btn-study-view-list", match: "btn-study-view-match" };
+  const areas = { card: "study-area-card", list: "study-area-list", match: "study-area-match" };
+  Object.keys(tabs).forEach(m => {
+    document.getElementById(tabs[m]).className = m === mode ? STUDY_TAB_ON : STUDY_TAB_OFF;
+    document.getElementById(areas[m]).classList.toggle("hidden", m !== mode);
+  });
+  // 짝맞추기 중에는 아래 테스트 버튼을 숨겨서 카드 판이 작은 화면에 들어가게
+  document.getElementById("study-bottom").classList.toggle("hidden", mode === "match");
 
-  if (mode === 'card') {
-    btnCard.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-white theme-primary-bg shadow-sm";
-    btnList.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition theme-sub-text";
-    areaCard.classList.remove("hidden");
-    areaList.classList.add("hidden");
-    renderStudyCard();
-  } else {
-    btnList.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-white theme-primary-bg shadow-sm";
-    btnCard.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition theme-sub-text";
-    areaCard.classList.add("hidden");
-    areaList.classList.remove("hidden");
-    renderStudyList();
-  }
+  if (mode === "card") renderStudyCard();
+  else if (mode === "list") renderStudyList();
+  else openMatch();
 }
 
 function renderStudyCard() {
@@ -95,9 +94,10 @@ function renderStudyList() {
 
 // 버튼 연결 (main.js에서 1번 호출)
 function initStudyScreen() {
-  document.getElementById("btn-study-exit").onclick = () => switchView("view-home");
+  document.getElementById("btn-study-exit").onclick = () => { stopMatch(); switchView("view-home"); };
   document.getElementById("btn-study-view-card").onclick = () => setStudyMode('card');
   document.getElementById("btn-study-view-list").onclick = () => setStudyMode('list');
+  document.getElementById("btn-study-view-match").onclick = () => setStudyMode('match');
 
   document.getElementById("btn-study-prev").onclick = () => {
     if (currentStudyIndex > 0) {

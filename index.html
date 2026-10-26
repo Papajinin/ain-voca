@@ -17,7 +17,7 @@
   <script>if (window.tailwind) tailwind.config = { darkMode: 'class' };</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <link rel="stylesheet" href="./style.css?v=11">
+  <link rel="stylesheet" href="./style.css?v=12">
 </head>
 <body class="theme-ios min-h-screen flex justify-center items-start antialiased selection:bg-blue-200">
   <script>
@@ -278,10 +278,13 @@
 
         <div class="theme-card p-1 rounded-xl border theme-border flex items-center space-x-1 shadow-sm mb-3">
           <button id="btn-study-view-card" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition text-white theme-primary-bg shadow-sm">
-            <i class="fa-regular fa-clone mr-1"></i> 카드형 (1장씩)
+            <i class="fa-regular fa-clone mr-1"></i> 카드형
           </button>
           <button id="btn-study-view-list" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition theme-sub-text">
-            <i class="fa-solid fa-list-ul mr-1"></i> 목록형 (한눈에)
+            <i class="fa-solid fa-list-ul mr-1"></i> 목록형
+          </button>
+          <button id="btn-study-view-match" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition theme-sub-text">
+            <i class="fa-solid fa-table-cells-large mr-1"></i> 짝맞추기
           </button>
         </div>
       </div>
@@ -321,7 +324,10 @@
         <div id="study-words-list-container" class="space-y-2"></div>
       </div>
 
-      <div class="w-full pt-2">
+      <!-- 짝맞추기 (match.js에서 채움) -->
+      <div id="study-area-match" class="flex-1 flex flex-col my-2 hidden"></div>
+
+      <div id="study-bottom" class="w-full pt-2">
         <button id="btn-start-quiz-from-study" class="w-full py-4 rounded-2xl theme-primary-bg text-white font-extrabold text-base shadow-lg active:scale-98 transition flex items-center justify-center space-x-2">
           <span>학습 완료! 테스트 시작하기</span>
           <i class="fa-solid fa-arrow-right"></i>
@@ -654,7 +660,8 @@
   <script src="./category.js?v=3"></script>
   <script src="./pos-guide.js?v=2"></script>
   <script src="./days.js?v=10"></script>
-  <script src="./study.js?v=10"></script>
+  <script src="./study.js?v=11"></script>
+  <script src="./match.js?v=1"></script>
   <script src="./quiz.js?v=11"></script>
   <script src="./result.js?v=10"></script>
   <script src="./notebook.js?v=1"></script>

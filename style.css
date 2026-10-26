@@ -83,3 +83,32 @@ body { background-color: var(--bg-page); color: var(--text-main); transition: ba
 
 /* 답을 낸 뒤 잠긴 입력칸도 글씨가 흐려지지 않게 (아이폰 기본 동작 보정) */
 #quiz-spell-input:disabled { opacity: 1; -webkit-text-fill-color: currentColor; }
+
+/* ---------- 짝맞추기 (match.js) ---------- */
+.match-panel { border-radius: 24px; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; margin: auto 0; }
+.match-ball-big { width: 64px; height: 64px; }
+.match-big { font-size: 48px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.match-stats { display: flex; align-items: center; gap: 10px; }
+.match-timer { flex: 1; height: 10px; border-radius: 5px; overflow: hidden; }
+.match-timer i { display: block; height: 100%; background: var(--primary); border-radius: 5px; transform-origin: left; }
+.match-timer.low i { background: #ef4444; }
+.match-sec { width: 30px; text-align: right; font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+.match-score { display: flex; justify-content: space-between; font-size: 13px; margin: 8px 0 10px; }
+.match-score b { color: var(--text-main); font-size: 16px; font-variant-numeric: tabular-nums; }
+.match-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.match-card { position: relative; height: 76px; perspective: 600px; padding: 0; border: 0; background: none; }
+.match-in { position: absolute; inset: 0; transition: transform .35s cubic-bezier(.22,.61,.36,1); transform-style: preserve-3d; }
+.match-card.up .match-in { transform: rotateY(180deg); }
+.match-face { position: absolute; inset: 0; border-radius: 14px; display: grid; place-items: center; text-align: center; padding: 6px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.match-back img { width: 36px; height: 36px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .25)); }
+.match-front { transform: rotateY(180deg); border-width: 1px; }
+.match-front small { position: absolute; top: 4px; left: 8px; font-size: 10px; font-weight: 700; color: var(--text-sub); }
+.match-en { font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.match-ko { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; word-break: keep-all; line-height: 1.25; }
+.match-card.ok .match-front { border: 2px solid #10b981; }
+.match-card.no .match-front { border: 2px solid #ef4444; animation: matchShake .3s; }
+.match-card.new .match-front { box-shadow: 0 0 0 2px var(--primary); }
+.match-card.gone { visibility: hidden; }
+@keyframes matchShake { 25% { transform: rotateY(180deg) translateX(-4px); } 75% { transform: rotateY(180deg) translateX(4px); } }
+.match-msg { text-align: center; font-size: 13px; min-height: 20px; margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) { .match-in { transition: none; } .match-card.no .match-front { animation: none; } }

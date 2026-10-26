@@ -1,15 +1,14 @@
 // ==========================================================
 // match.js : 단어학습 화면의 "짝맞추기" 탭 (카드 뒤집기 게임)
 // - 그 Stage 단어로 영어 카드와 뜻 카드를 짝지음. 판은 6쌍(12장), 90초
-// - 시작할 때 3초 동안 앞면을 보여 줌
-// - 3쌍을 찾으면 빈 6칸에 새 3쌍을 섞어 넣고 1.5초 보여 줌 (남은 카드는 자리 그대로)
-//   한 쌍씩 바로 채우면 빈 두 칸이 당연히 짝이라 외울 필요가 없어지기 때문
+// - 판마다 12장을 3초 동안 보여 주고 뒤집음. 시간은 멈추지 않음
+// - 5쌍을 찾으면 그 판은 끝(마지막 2장은 저절로 알게 되므로). 남은 1쌍은 짝으로 세지 않고
+//   다음 판에 꼭 들어감 → 남은 단어 + 새 단어 5개로 새 판
 // - 진도·챌린지·오답노트에는 반영하지 않음. Stage별 최고 기록만 이 기기에 저장
 // ==========================================================
 
 const MATCH_TIME = 90;          // 제한 시간(초)
-const MATCH_PREVIEW_MS = 3000;  // 시작할 때 앞면 보여 주는 시간
-const MATCH_NEWPEEK_MS = 1500;  // 새 카드 보여 주는 시간
+const MATCH_PREVIEW_MS = 3000;  // 판마다 앞면 보여 주는 시간
 const MATCH_BEST_KEY = "AIN_VOCA_MATCH_BEST"; // 진도 저장(AIN_ENG_APP_V2)과 따로
 
 let matchSlots = [];
@@ -18,7 +17,7 @@ let matchOpen = [];
 let matchBusy = false;
 let matchFound = 0;
 let matchMiss = 0;
-let matchSinceRefill = 0;
+let matchRounds = 0; // 깬 판 수
 let matchTimer = null;
 let matchLeft = MATCH_TIME;
 let matchTimeouts = [];
@@ -56,14 +55,12 @@ function matchNextWord(skip) {
   skip.add(w);
   return w;
 }
-function matchNewCards(pairs) {
-  const skip = new Set(matchSlots.filter(c => !c.gone).map(c => c.w));
-  const out = [];
-  for (let k = 0; k < pairs; k++) {
-    const w = matchNextWord(skip);
-    out.push({ w, en: true }, { w, en: false });
-  }
-  return matchShuffle(out);
+// 새 판: 지난 판에 남은 단어(carry)를 먼저 넣고 나머지는 새 단어
+function matchNewBoard(carry) {
+  const words = carry === undefined ? [] : [carry];
+  const skip = new Set(words);
+  while (words.length < matchBoardPairs()) words.push(matchNextWord(skip));
+  return matchShuffle(words.flatMap(w => [{ w, en: true }, { w, en: false }]));
 }
 
 function matchLater(fn, ms) { matchTimeouts.push(setTimeout(fn, ms)); }
@@ -84,7 +81,7 @@ function openMatch() {
     <div class="match-panel theme-card border theme-border">
       <img src="./volleyball.png" alt="" class="match-ball-big" draggable="false">
       <div class="text-lg font-extrabold">카드 짝맞추기</div>
-      <p class="text-sm theme-sub-text">영어 카드와 뜻 카드를 짝지어요.<br>처음 3초 동안 앞면을 보여 줘요. 제한 시간 ${MATCH_TIME}초</p>
+      <p class="text-sm theme-sub-text">영어 카드와 뜻 카드를 짝지어요.<br>판마다 3초 동안 앞면을 보여 줘요. 제한 시간 ${MATCH_TIME}초</p>
       ${best !== null ? `<p class="text-sm font-bold theme-primary-text">최고 기록 ${best}쌍</p>` : ""}
       <button id="btn-match-go" class="w-full py-4 rounded-2xl theme-primary-bg text-white font-extrabold text-base shadow-lg active:scale-95 transition">시작!</button>
     </div>`;
@@ -98,10 +95,8 @@ function startMatch() {
   matchOpen = [];
   matchFound = 0;
   matchMiss = 0;
-  matchSinceRefill = 0;
+  matchRounds = 0;
   matchLeft = MATCH_TIME;
-  matchSlots = matchNewCards(matchBoardPairs()).map(c => ({ ...c, up: true }));
-  matchBusy = true;
   matchEl().innerHTML = `
     <div class="match-stats">
       <div class="match-timer theme-card border theme-border" id="match-timer"><i id="match-bar"></i></div>
@@ -109,19 +104,31 @@ function startMatch() {
     </div>
     <div class="match-score theme-sub-text">
       <span>찾은 짝 <b id="match-found">0</b></span>
+      <span>판 <b id="match-rounds">0</b></span>
       <span>틀림 <b id="match-miss">0</b></span>
       <span>최고 <b id="match-best">${getMatchBest() ?? "-"}</b></span>
     </div>
     <div class="match-board" id="match-board"></div>
-    <p class="match-msg theme-sub-text" id="match-msg"><b class="theme-primary-text">3초</b> 동안 잘 봐 두세요</p>`;
+    <p class="match-msg theme-sub-text" id="match-msg"></p>`;
   document.getElementById("match-board").onclick = onMatchTap;
+  dealMatch(undefined, true);
+}
+
+// 판 깔기: 12장을 3초 보여 주고 뒤집음. 첫 판이 뒤집힐 때 시간이 흐르기 시작
+function dealMatch(carry, first) {
+  matchSlots = matchNewBoard(carry).map(c => ({ ...c, up: true }));
+  matchOpen = [];
+  matchBusy = true;
+  document.getElementById("match-msg").innerHTML = first
+    ? `<b class="theme-primary-text">3초</b> 동안 잘 봐 두세요`
+    : `<b class="theme-primary-text">새 판!</b> 3초 동안 잘 봐 두세요`;
   renderMatchBoard();
   matchLater(() => {
     matchSlots.forEach(c => { c.up = false; });
     matchBusy = false;
     document.getElementById("match-msg").textContent = "";
     renderMatchBoard();
-    startMatchTimer();
+    if (first) startMatchTimer();
   }, MATCH_PREVIEW_MS);
 }
 
@@ -150,6 +157,7 @@ function renderMatchBoard() {
     </button>`;
   }).join("");
   document.getElementById("match-found").textContent = matchFound;
+  document.getElementById("match-rounds").textContent = matchRounds;
   document.getElementById("match-miss").textContent = matchMiss;
 }
 
@@ -170,17 +178,17 @@ function onMatchTap(e) {
   if (a.w === d.w && a.en !== d.en) {
     a.ok = d.ok = true;
     matchFound++;
-    matchSinceRefill++;
     renderMatchBoard();
     matchLater(() => {
       a.gone = d.gone = true;
       a.ok = d.ok = false;
       matchBusy = false;
       renderMatchBoard();
-      const refillAt = matchBoardPairs() === 6 ? 3 : matchBoardPairs();
-      if (matchSinceRefill === refillAt && matchLeft > 0) {
-        matchSinceRefill = 0;
-        refillMatch();
+      // 남은 짝이 1쌍(판이 1쌍뿐이면 0쌍)이면 판 끝. 남은 단어는 다음 판으로
+      const left = matchSlots.filter(c => !c.gone && c.en).map(c => c.w);
+      if (left.length <= (matchBoardPairs() > 1 ? 1 : 0) && matchLeft > 0) {
+        matchRounds++;
+        dealMatch(left[0], false);
       }
     }, 450);
   } else {
@@ -195,22 +203,6 @@ function onMatchTap(e) {
   }
 }
 
-// 빈칸에 새 카드를 섞어 넣고 잠깐 보여 줌
-function refillMatch() {
-  const empty = matchSlots.map((c, i) => (c.gone ? i : -1)).filter(i => i >= 0);
-  const cards = matchNewCards(empty.length / 2);
-  empty.forEach((i, k) => { matchSlots[i] = { ...cards[k], up: true, isNew: true }; });
-  matchBusy = true;
-  document.getElementById("match-msg").textContent = `새 카드 ${empty.length / 2}쌍!`;
-  renderMatchBoard();
-  matchLater(() => {
-    matchSlots.forEach(c => { if (c.isNew) { c.up = false; c.isNew = false; } });
-    matchBusy = false;
-    document.getElementById("match-msg").textContent = "";
-    renderMatchBoard();
-  }, MATCH_NEWPEEK_MS);
-}
-
 function finishMatch() {
   stopMatch();
   const best = getMatchBest();
@@ -220,7 +212,7 @@ function finishMatch() {
     <div class="match-panel theme-card border theme-border">
       <p class="text-sm theme-sub-text">${MATCH_TIME}초 동안 찾은 짝</p>
       <div class="match-big theme-primary-text">${matchFound}</div>
-      <p class="text-sm theme-sub-text">틀림 ${matchMiss}번 · ${isBest ? "<b class='theme-primary-text'>최고 기록!</b>" : `최고 기록 ${best ?? 0}쌍`}</p>
+      <p class="text-sm theme-sub-text">깬 판 ${matchRounds} · 틀림 ${matchMiss}번 · ${isBest ? "<b class='theme-primary-text'>최고 기록!</b>" : `최고 기록 ${best ?? 0}쌍`}</p>
       <button id="btn-match-again" class="w-full py-4 rounded-2xl theme-primary-bg text-white font-extrabold text-base shadow-lg active:scale-95 transition">다시 하기</button>
       <button id="btn-match-back" class="w-full py-3.5 rounded-2xl theme-card border theme-border theme-primary-text font-extrabold text-sm active:scale-95 transition">카드형으로 단어 보기</button>
     </div>`;

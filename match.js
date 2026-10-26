@@ -1,6 +1,8 @@
 // ==========================================================
 // match.js : 단어학습 화면의 "짝맞추기" 탭 (카드 뒤집기 게임)
-// - 그 Stage 단어로 영어 카드와 뜻 카드를 짝지음. 판은 6쌍(12장), 90초
+// - 그 Stage 단어로 영어 카드와 뜻 카드를 짝지음. 판은 6쌍(12장), 10단어 이하 Stage는 5쌍(10장). 90초
+//   (10단어에 6쌍이면 판마다 단어가 너무 많이 겹쳐서)
+// - 판마다 가장 오래 안 나온 단어부터 고름 (같으면 무작위)
 // - 판마다 12장을 3초 동안 보여 주고 뒤집음. 시간은 멈추지 않음
 // - 5쌍을 찾으면 그 판은 끝(마지막 2장은 저절로 알게 되므로). 남은 1쌍은 짝으로 세지 않고
 //   다음 판에 꼭 들어감 → 남은 단어 + 새 단어 5개로 새 판
@@ -12,7 +14,8 @@ const MATCH_PREVIEW_MS = 3000;  // 판마다 앞면 보여 주는 시간
 const MATCH_BEST_KEY = "AIN_VOCA_MATCH_BEST"; // 진도 저장(AIN_ENG_APP_V2)과 따로
 
 let matchSlots = [];
-let matchQueue = [];
+let matchSeen = {};   // 단어마다 마지막으로 나온 판 번호
+let matchDeals = 0;   // 지금까지 깐 판 수
 let matchOpen = [];
 let matchBusy = false;
 let matchFound = 0;
@@ -42,24 +45,16 @@ function matchShuffle(a) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
-function matchBoardPairs() { return Math.min(6, studyWords.length); }
+function matchBoardPairs() { return studyWords.length <= 10 ? Math.min(5, studyWords.length) : 6; }
 
-// 다음 단어: Stage 단어를 섞어서 차례로, 다 쓰면 다시 섞음. 판에 있는 단어(skip)는 건너뜀
-function matchNextWord(skip) {
-  let i = matchQueue.findIndex(w => !skip.has(w));
-  if (i < 0) {
-    matchQueue = matchShuffle(studyWords.map((_, k) => k).filter(k => !skip.has(k)));
-    i = 0;
-  }
-  const w = matchQueue.splice(i, 1)[0];
-  skip.add(w);
-  return w;
-}
-// 새 판: 지난 판에 남은 단어(carry)를 먼저 넣고 나머지는 새 단어
+// 새 판: 지난 판에 남은 단어(carry)를 먼저 넣고, 나머지는 가장 오래 안 나온 단어부터
 function matchNewBoard(carry) {
+  matchDeals++;
   const words = carry === undefined ? [] : [carry];
-  const skip = new Set(words);
-  while (words.length < matchBoardPairs()) words.push(matchNextWord(skip));
+  const rest = matchShuffle(studyWords.map((_, k) => k).filter(k => k !== carry))
+    .sort((a, b) => (matchSeen[a] ?? 0) - (matchSeen[b] ?? 0)); // 섞은 뒤 정렬: 같은 순위끼리는 무작위
+  while (words.length < matchBoardPairs()) words.push(rest.shift());
+  words.forEach(w => { matchSeen[w] = matchDeals; });
   return matchShuffle(words.flatMap(w => [{ w, en: true }, { w, en: false }]));
 }
 
@@ -91,7 +86,8 @@ function openMatch() {
 function startMatch() {
   stopMatch();
   matchSlots = [];
-  matchQueue = [];
+  matchSeen = {};
+  matchDeals = 0;
   matchOpen = [];
   matchFound = 0;
   matchMiss = 0;
@@ -108,7 +104,7 @@ function startMatch() {
       <span>틀림 <b id="match-miss">0</b></span>
       <span>최고 <b id="match-best">${getMatchBest() ?? "-"}</b></span>
     </div>
-    <div class="match-board" id="match-board"></div>
+    <div class="match-board${matchBoardPairs() === 5 ? " five" : ""}" id="match-board"></div>
     <p class="match-msg theme-sub-text" id="match-msg"></p>`;
   document.getElementById("match-board").onclick = onMatchTap;
   dealMatch(undefined, true);

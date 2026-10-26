@@ -96,6 +96,9 @@ body { background-color: var(--bg-page); color: var(--text-main); transition: ba
 .match-score { display: flex; justify-content: space-between; font-size: 13px; margin: 8px 0 10px; }
 .match-score b { color: var(--text-main); font-size: 16px; font-variant-numeric: tabular-nums; }
 .match-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+/* 5쌍(10장): 2장씩 5줄 */
+.match-board.five { grid-template-columns: repeat(2, 1fr); }
+.match-board.five .match-card { height: 62px; }
 .match-card { position: relative; height: 76px; perspective: 600px; padding: 0; border: 0; background: none; }
 .match-in { position: absolute; inset: 0; transition: transform .35s cubic-bezier(.22,.61,.36,1); transform-style: preserve-3d; }
 .match-card.up .match-in { transform: rotateY(180deg); }

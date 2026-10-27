@@ -115,9 +115,9 @@ function initStudyScreen() {
   document.getElementById("btn-start-quiz-from-study").onclick = () => {
     startQuiz(currentStudyDay);
   };
-  // 복습 테스트: 기존 테스트와 동일
+  // 복습 테스트: 배구 역전승 (quiz.js, 진도·챌린지 기록 없음)
   document.getElementById("btn-review-test").onclick = () => {
-    startQuiz(currentStudyDay);
+    startQuiz(currentStudyDay, "day", null, false, true);
   };
   // 복습 게임: 4지선다 (quiz.js)
   document.getElementById("btn-review-game").onclick = () => {

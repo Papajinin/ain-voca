@@ -22,7 +22,7 @@ Oxford 5000 기반 영어 단어 학습 웹앱입니다. GitHub Pages로 배포�
 | `pos-guide.js` | ② 품사학습 화면 (15종 품사 설명) |
 | `days.js` | ③ 학습단계 화면 (Stage 목록, 진도율, 영한/한영 선택) |
 | `study.js` | ④ 단어학습 화면 (카드형/목록형) |
-| `quiz.js` | ⑤ 영한 · ⑥ 한영 퀴즈 화면 + 복습 게임(4지선다) |
+| `quiz.js` | ⑤ 영한 · ⑥ 한영 퀴즈 화면 + 복습 게임(4지선다) + 복습 테스트(배구 점수판) |
 | `result.js` | ⑦ 결과 화면 |
 | `notebook.js` | ⑧ 오답노트 화면 |
 | `challenge.js` | 데일리 챌린지 (앱을 열면 처음 보이는 화면): 퍼즐, 달력, 조각 고르기, 이미지 보기 |
@@ -55,6 +55,7 @@ Oxford 5000 기반 영어 단어 학습 웹앱입니다. GitHub Pages로 배포�
 | 퀴즈 진행, 스펠링 채점 규칙, 영→한 뜻 입력 | `quiz.js` |
 | 복습 게임의 보기 고르는 규칙 (오답 후보, 개수) | `quiz.js` (`buildChoices`) |
 | 정답 후 넘어가는 시간 (지금 3초, 한영 테스트·복습 게임 공통) | `quiz.js` (`CORRECT_NEXT_DELAY`) |
+| 복습 테스트의 공격 이름·수비 표현·시작 점수 | `quiz.js` (`RALLY_ATTACKS`, `RALLY_DEFENDS`, `rallyInfo`) |
 | 클리어한 Stage의 복습 버튼 2개 표시 조건 | `study.js` (`openStudyView`) |
 | 결과 화면 문구, 클리어 기록 방식 | `result.js` |
 | 오답노트 동작 | `notebook.js` |

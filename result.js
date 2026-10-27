@@ -1,6 +1,6 @@
 // ==========================================================
 // result.js : ⑦ 결과 화면 (정답률, 오답 목록, 100% 클리어 기록)
-// 복습 게임 결과도 이 화면을 함께 씁니다 (문구만 다름, 진도 기록 없음).
+// 복습 게임·복습 테스트(배구 역전승) 결과도 이 화면을 함께 씁니다 (문구만 다름, 진도 기록 없음).
 // 데일리 챌린지 칸을 채웠으면 "조각 열기!" 카드를 보여 줍니다 (challenge.js).
 // ==========================================================
 
@@ -13,6 +13,8 @@ function finishQuiz() {
 
   document.getElementById("result-stat-pct").textContent = `${pct}%`;
   document.getElementById("result-stat-count").textContent = `${correctCount} / ${total}`;
+  document.getElementById("result-stat-pct-label").textContent = quizIsRally ? "한 번에 득점" : "정답률";
+  document.getElementById("result-stat-count-label").textContent = quizIsRally ? "다시 쳐서 득점" : "맞힌 개수";
 
   const iconBadge = document.getElementById("result-icon-badge");
   const title = document.getElementById("result-title");
@@ -27,7 +29,19 @@ function finishQuiz() {
   document.getElementById("txt-result-retry-label").textContent =
     quizIsGame ? "틀린 단어만 게임으로 재도전" : "틀린 단어만 재도전 (100% 클리어)";
 
-  if (isAllClear) {
+  if (quizIsRally) {
+    // 복습 테스트: 틀린 단어를 끝까지 다시 쳐서 언제나 역전승. 이미 클리어한 Day라 진도는 기록하지 않음
+    const S = rallyInfo();
+    document.getElementById("result-stat-pct").textContent = total - missedCount;
+    document.getElementById("result-stat-count").textContent = missedCount;
+    iconBadge.className = "w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center shadow-inner mt-4 mb-3";
+    iconBadge.innerHTML = `<img class="rally-ball-big" src="./volleyball.png" alt="">`;
+    title.textContent = "경기 승리!";
+    subtitle.textContent = `${RALLY_TEAMS[rallyTeamKey()]} ${S.start}:${S.them}에서 ${S.point}:${S.them} 역전 · 세트 스코어 ${S.setUs + 1}:${S.setThem}`;
+    retryBtn.classList.add("hidden");
+    const totalDays = Math.ceil(getWordsForCategory(state.selectedLevel, state.selectedPosGroup).length / state.wordsPerDay);
+    nextBtn.classList.toggle("hidden", currentQuizDayNumber >= totalDays);
+  } else if (isAllClear) {
     iconBadge.className = "w-20 h-20 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-4xl shadow-inner mt-4 mb-3";
     iconBadge.innerHTML = `<i class="fa-solid fa-trophy"></i>`;
     retryBtn.classList.add("hidden");
@@ -92,6 +106,7 @@ function finishQuiz() {
           <span class="font-bold">${item.word}</span>
           ${item.ipa ? `<span class="text-[11px] opacity-75 ml-1">${item.ipa}</span>` : ''}
           <span class="text-[10px] opacity-60 ml-1 font-semibold">[${getKoreanPos(item.pos)}]</span>
+          ${quizIsRally && rally.misses.has(item) ? `<span class="text-[10px] font-bold ml-1">${rally.misses.get(item)}번 틀림</span>` : ''}
           <div class="text-[11px] opacity-90">${item.meaning}</div>
         </div>
       </div>

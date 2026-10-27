@@ -115,3 +115,44 @@ body { background-color: var(--bg-page); color: var(--text-main); transition: ba
 @keyframes matchShake { 25% { transform: rotateY(180deg) translateX(-4px); } 75% { transform: rotateY(180deg) translateX(4px); } }
 .match-msg { text-align: center; font-size: 13px; min-height: 20px; margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) { .match-in { transition: none; } .match-card.no .match-front { animation: none; } }
+
+/* ---------- 복습 테스트: 배구 점수판 (quiz.js) ---------- */
+body.theme-dark    { --rally-board: #020617; --rally-score: #f97316; --rally-ok: #4ade80; --rally-bad: #f87171; }
+body.theme-ios     { --rally-board: #1f1315; --rally-score: #f87171; --rally-ok: #15803d; --rally-bad: #dc2626; }
+body.theme-playful { --rally-board: #083c38; --rally-score: #2dd4bf; --rally-ok: #15803d; --rally-bad: #dc2626; }
+body.theme-paper   { --rally-board: #2c363b; --rally-score: #d5c57d; --rally-ok: #15803d; --rally-bad: #dc2626; }
+.rally-board { background: var(--rally-board); color: #fff; border-radius: 20px; padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--card-shadow); }
+.rally-board.hidden { display: none; }
+/* 점수판이 들어가도 아이폰 SE3 한 화면에 들어가게 문제 카드 여백을 줄임 */
+#view-quiz.rally-on > div:first-child { padding-bottom: 6px; }
+#view-quiz.rally-on > div > .theme-card { padding-top: 10px; padding-bottom: 10px; }
+#view-quiz.rally-on > div > .theme-card > .my-6 { margin-top: 6px; margin-bottom: 6px; }
+#view-quiz.rally-on #quiz-feedback-msg { margin-top: 4px; }
+#view-quiz.rally-on #quiz-pos-badge { margin-bottom: 6px; }
+#view-quiz.rally-on #quiz-answer-container { min-height: 0; }
+.rally-cap { font-size: 11px; font-weight: 800; letter-spacing: .08em; opacity: .75; }
+.rally-mp { color: var(--rally-score); font-size: 12px; letter-spacing: .02em; animation: rallyBlink 1s steps(2) infinite; }
+.rally-grid { display: grid; grid-template-columns: 1fr 40px 68px; align-items: center; column-gap: 8px; row-gap: 4px; font-variant-numeric: tabular-nums; }
+.rally-head { font-size: 10px; font-weight: 800; letter-spacing: .1em; opacity: .55; text-align: center; }
+.rally-team { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; min-width: 0; }
+.rally-team i { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--rally-score); }
+.rally-team.them { opacity: .7; }
+.rally-team.them i { background: rgba(255, 255, 255, .14); }
+.rally-set { height: 26px; border-radius: 10px; background: rgba(255, 255, 255, .12); display: grid; place-items: center; font-size: 18px; font-weight: 800; }
+.rally-pts { height: 32px; border-radius: 12px; background: rgba(0, 0, 0, .35); display: grid; place-items: center; font-size: 28px; font-weight: 900; line-height: 1; overflow: hidden; }
+.rally-pts.us { color: var(--rally-score); }
+.rally-pts.them { opacity: .75; }
+.rally-pts b { display: block; }
+.rally-pts b.flip { animation: rallyFlip .5s cubic-bezier(.2, .8, .3, 1); }
+.rally-foot { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; opacity: .8; min-height: 16px; }
+.rally-back { color: var(--rally-score); }
+.rally-line { display: block; font-size: 16px; font-weight: 800; line-height: 1.3; }
+.rally-line.ok { color: var(--rally-ok); }
+.rally-line.bad { color: var(--rally-bad); }
+.rally-line img { display: inline; width: 18px; height: 18px; vertical-align: -3px; margin: 0 4px; }
+.rally-sub { display: block; font-size: 12px; font-weight: 600; color: var(--text-sub); line-height: 1.4; }
+.rally-ball-big { width: 52px; height: 52px; animation: rallySpin 1.2s ease-out; }
+@keyframes rallyFlip { from { transform: translateY(-100%); opacity: 0; } 60% { transform: translateY(8%); opacity: 1; } }
+@keyframes rallyBlink { 50% { opacity: .35; } }
+@keyframes rallySpin { from { transform: rotate(-200deg) scale(.5); } }
+@media (prefers-reduced-motion: reduce) { .rally-pts b.flip, .rally-mp, .rally-ball-big { animation: none; } }

@@ -16,7 +16,7 @@
   <script>
     // 새 버전 스스로 받기 (Todo·Cost·Days·Line과 같음): 켤 때 서버의 version.txt 숫자가 아래 APP_VERSION보다 크면
     // 새 화면 파일을 받아 한 번 새로고침. 올릴 때마다 두 숫자를 같이 올린다
-    const APP_VERSION = 4;
+    const APP_VERSION = 5;
     (function () {
       const t0 = Date.now();
       const key = 'ainVoca.updated'; // 같은 버전으로 두 번 새로고침하지 않게
@@ -38,7 +38,7 @@
   <script>if (window.tailwind) tailwind.config = { darkMode: 'class' };</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <link rel="stylesheet" href="./style.css?v=13">
+  <link rel="stylesheet" href="./style.css?v=14">
 </head>
 <body class="theme-ios min-h-screen flex justify-center items-start antialiased selection:bg-blue-200">
   <script>
@@ -373,13 +373,16 @@
         <button id="btn-quiz-exit" class="w-8 h-8 rounded-full theme-card border theme-border flex items-center justify-center theme-sub-text active:scale-95">
           <i class="fa-solid fa-xmark text-sm"></i>
         </button>
-        <div class="flex-1 mx-4">
+        <div id="quiz-progress-wrap" class="flex-1 mx-4">
           <div class="w-full bg-black/10 dark:bg-white/10 h-2 rounded-full overflow-hidden">
             <div id="quiz-progress-bar" class="h-full theme-primary-bg transition-all duration-300 w-1/10 rounded-full"></div>
           </div>
         </div>
         <span id="quiz-progress-text" class="text-xs font-black theme-sub-text">1 / 10</span>
       </div>
+
+      <!-- 복습 테스트에서만 보이는 배구 점수판 (quiz.js에서 채움) -->
+      <div id="quiz-rally-board" class="rally-board hidden" aria-label="점수판"></div>
 
       <div class="flex-1 flex flex-col justify-center items-center my-2">
         <div class="w-full theme-card rounded-3xl border theme-border p-6 py-8 flex flex-col items-center text-center relative shadow-md">
@@ -471,12 +474,12 @@
 
         <div class="w-full theme-card rounded-2xl border theme-border p-4 my-4 flex items-center justify-around text-center">
           <div>
-            <div class="text-xs theme-sub-text font-bold">정답률</div>
+            <div id="result-stat-pct-label" class="text-xs theme-sub-text font-bold">정답률</div>
             <div id="result-stat-pct" class="text-2xl font-black theme-primary-text mt-0.5">100%</div>
           </div>
           <div class="h-8 w-px bg-black/10 dark:bg-white/10"></div>
           <div>
-            <div class="text-xs theme-sub-text font-bold">맞힌 개수</div>
+            <div id="result-stat-count-label" class="text-xs theme-sub-text font-bold">맞힌 개수</div>
             <div id="result-stat-count" class="text-2xl font-black text-emerald-600 mt-0.5">10 / 10</div>
           </div>
         </div>
@@ -681,10 +684,10 @@
   <script src="./category.js?v=3"></script>
   <script src="./pos-guide.js?v=2"></script>
   <script src="./days.js?v=10"></script>
-  <script src="./study.js?v=11"></script>
+  <script src="./study.js?v=12"></script>
   <script src="./match.js?v=3"></script>
-  <script src="./quiz.js?v=11"></script>
-  <script src="./result.js?v=10"></script>
+  <script src="./quiz.js?v=12"></script>
+  <script src="./result.js?v=11"></script>
   <script src="./notebook.js?v=1"></script>
   <script src="./challenge.js?v=11"></script>
   <script src="./settings.js?v=4"></script>

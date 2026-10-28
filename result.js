@@ -39,8 +39,7 @@ function finishQuiz() {
     title.textContent = "경기 승리!";
     subtitle.textContent = `${RALLY_TEAMS[rallyTeamKey()]} ${S.start}:${S.them}에서 ${S.point}:${S.them} 역전 · 세트 스코어 ${S.setUs + 1}:${S.setThem}`;
     retryBtn.classList.add("hidden");
-    const totalDays = Math.ceil(getWordsForCategory(state.selectedLevel, state.selectedPosGroup).length / state.wordsPerDay);
-    nextBtn.classList.toggle("hidden", currentQuizDayNumber >= totalDays);
+    nextBtn.classList.toggle("hidden", currentQuizDayNumber >= getTotalDays());
   } else if (isAllClear) {
     iconBadge.className = "w-20 h-20 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-4xl shadow-inner mt-4 mb-3";
     iconBadge.innerHTML = `<i class="fa-solid fa-trophy"></i>`;
@@ -50,8 +49,7 @@ function finishQuiz() {
       // 복습 게임: 이미 클리어한 Day라 진도는 기록하지 않음
       title.textContent = "복습 게임 100%!";
       subtitle.textContent = `Stage ${currentQuizDayNumber} 단어를 게임으로 모두 맞혔습니다.`;
-      const totalDays = Math.ceil(getWordsForCategory(state.selectedLevel, state.selectedPosGroup).length / state.wordsPerDay);
-      nextBtn.classList.toggle("hidden", currentQuizDayNumber >= totalDays);
+      nextBtn.classList.toggle("hidden", currentQuizDayNumber >= getTotalDays());
     } else if (isDayQuiz) {
       title.textContent = `Stage ${currentQuizDayNumber} 100% 클리어!`;
       subtitle.textContent = "모든 단어를 완벽하게 마스터하셨습니다.";
@@ -72,9 +70,7 @@ function finishQuiz() {
         document.getElementById("btn-result-open-piece").classList.toggle("hidden", credit.count === 0);
         document.getElementById("result-challenge-card").classList.remove("hidden");
       }
-
-      const totalDays = Math.ceil(getWordsForCategory(state.selectedLevel, state.selectedPosGroup).length / state.wordsPerDay);
-      nextBtn.classList.toggle("hidden", currentQuizDayNumber >= totalDays);
+      nextBtn.classList.toggle("hidden", currentQuizDayNumber >= getTotalDays());
     } else {
       title.textContent = "오답 복습 100% 완료!";
       subtitle.textContent = "복습한 단어를 모두 맞혔습니다.";

@@ -57,10 +57,7 @@ function startQuiz(dayNumber, source = "day", customWordList = null, isGame = fa
   if (customWordList) {
     quizSet = [...customWordList];
   } else {
-    const categoryWords = getWordsForCategory(state.selectedLevel, state.selectedPosGroup);
-    const start = (dayNumber - 1) * state.wordsPerDay;
-    const end = start + state.wordsPerDay;
-    quizSet = categoryWords.slice(start, end);
+    quizSet = getStageWords(dayNumber);
   }
   if (quizSet.length === 0) return;
 
@@ -71,9 +68,7 @@ function startQuiz(dayNumber, source = "day", customWordList = null, isGame = fa
   rally = isRally ? { score: 0, misses: new Map(), rival: pickRallyRival(), line: "" } : null;
   currentQuizDayNumber = dayNumber;
   quizMissedWords = [];
-  currentQuizSet = quizSet;
-
-  currentQuizSet.sort(() => Math.random() - 0.5);
+  currentQuizSet = randomShuffle(quizSet);
   currentQuizIndex = 0;
 
   renderQuizQuestion();
@@ -211,16 +206,6 @@ function rallyDefended(answer) {
 }
 
 // ---------- 복습 게임 (4지선다) ----------
-
-// 매 문제마다 새로 섞기 (Day 구성용 고정 섞기와 별개)
-function randomShuffle(array) {
-  const copy = [...array];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
 
 // 보기 = 정답 1개 + 오답 최대 3개 (순서 무작위)
 // 오답 후보: ① 같은 레벨·같은 품사 → 부족하면 ② 같은 품사의 다른 레벨

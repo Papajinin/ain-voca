@@ -41,21 +41,17 @@ function setMatchBest(n) {
   } catch (e) {}
 }
 
-function matchShuffle(a) {
-  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-  return a;
-}
 function matchBoardPairs() { return studyWords.length <= 10 ? Math.min(5, studyWords.length) : 6; }
 
 // 새 판: 지난 판에 남은 단어(carry)를 먼저 넣고, 나머지는 가장 오래 안 나온 단어부터
 function matchNewBoard(carry) {
   matchDeals++;
   const words = carry === undefined ? [] : [carry];
-  const rest = matchShuffle(studyWords.map((_, k) => k).filter(k => k !== carry))
+  const rest = randomShuffle(studyWords.map((_, k) => k).filter(k => k !== carry))
     .sort((a, b) => (matchSeen[a] ?? 0) - (matchSeen[b] ?? 0)); // 섞은 뒤 정렬: 같은 순위끼리는 무작위
   while (words.length < matchBoardPairs()) words.push(rest.shift());
   words.forEach(w => { matchSeen[w] = matchDeals; });
-  return matchShuffle(words.flatMap(w => [{ w, en: true }, { w, en: false }]));
+  return randomShuffle(words.flatMap(w => [{ w, en: true }, { w, en: false }]));
 }
 
 function matchLater(fn, ms) { matchTimeouts.push(setTimeout(fn, ms)); }

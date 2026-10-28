@@ -274,3 +274,24 @@ function getWordsForCategory(level, posGroupId) {
 function getClearKey(mode, level, posGroup, day) {
   return `${mode}_${level}_${posGroup}_${state.wordsPerDay}_${day}`;
 }
+
+// 지금 고른 레벨·품사 그룹의 Stage 수
+function getTotalDays() {
+  return Math.ceil(getWordsForCategory(state.selectedLevel, state.selectedPosGroup).length / state.wordsPerDay);
+}
+
+// 지금 고른 레벨·품사 그룹의 day번 Stage 단어
+function getStageWords(day) {
+  const start = (day - 1) * state.wordsPerDay;
+  return getWordsForCategory(state.selectedLevel, state.selectedPosGroup).slice(start, start + state.wordsPerDay);
+}
+
+// 매번 새로 섞기 (퀴즈 순서, 게임 보기, 짝맞추기 판). Stage 구성용 고정 섞기(seededShuffle)와 별개
+function randomShuffle(array) {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}

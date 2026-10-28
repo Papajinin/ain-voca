@@ -10,10 +10,7 @@ let studyDisplayMode = 'card';
 
 function openStudyView(dayNumber) {
   currentStudyDay = dayNumber;
-  const categoryWords = getWordsForCategory(state.selectedLevel, state.selectedPosGroup);
-  const start = (dayNumber - 1) * state.wordsPerDay;
-  const end = start + state.wordsPerDay;
-  studyWords = categoryWords.slice(start, end);
+  studyWords = getStageWords(dayNumber);
 
   currentStudyIndex = 0;
   document.getElementById("study-header-title").textContent = `Stage ${dayNumber} 단어 학습 (${studyWords.length}단어)`;

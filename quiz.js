@@ -23,10 +23,15 @@ let rally = null;            // 복습 테스트 점수: { score, misses(단어 
 
 const CORRECT_NEXT_DELAY = 3000;   // 정답 후 다음 문제까지 (ms)
 
+// 퀴즈 화면 부품 보이기(true)/숨기기(false)
+function showEl(id, on) {
+  document.getElementById(id).classList.toggle("hidden", !on);
+}
+
 // 오답: "다음 문제" 버튼을 보여 주고 누를 때까지 기다림
 function waitForNextButton() {
   awaitingNext = true;
-  document.getElementById("btn-quiz-next").classList.remove("hidden");
+  showEl("btn-quiz-next", true);
 }
 
 const TEST_PLACEHOLDER = "뜻을 입력하고 '정답 확인하기'를 누르세요";
@@ -93,46 +98,32 @@ function renderQuizQuestion() {
 
   document.getElementById("quiz-pos-badge").textContent = `${getKoreanPos(current.pos)} · ${current.level}`;
 
-  document.getElementById("btn-show-answer").classList.add("hidden");
-  document.getElementById("quiz-self-eval-buttons").classList.add("hidden");
-  document.getElementById("btn-submit-typing").classList.add("hidden");
-  document.getElementById("btn-quiz-next").classList.add("hidden");
+  // 새 문제: 문제 종류(게임 / 영→한 입력 / 한→영 입력)에 맞는 부품만 보이기
+  const kind = quizIsGame ? "game" : mode;
+  showEl("quiz-answer-container", true);
+  showEl("quiz-typing-container", kind !== "game");
+  showEl("btn-show-answer", kind === "en-ko");
+  showEl("btn-submit-typing", kind === "ko-en");
+  showEl("quiz-hidden-placeholder", kind !== "ko-en");   // "뜻을 입력하고…" / "알맞은 답을 고르세요"
+  showEl("quiz-ipa-container", mode === "en-ko");        // 발음기호는 영어 단어가 문제일 때만
+  // 답을 낸 뒤에만 보이는 것
+  ["quiz-revealed-meaning", "quiz-my-answer-label", "quiz-correct-label", "quiz-self-eval-buttons",
+    "btn-quiz-next", "quiz-choice-container", "quiz-choice-feedback"].forEach(id => showEl(id, false));
   awaitingNext = false;
-  document.getElementById("quiz-typing-container").classList.add("hidden");
-  document.getElementById("quiz-answer-container").classList.remove("hidden");
-  document.getElementById("quiz-revealed-meaning").classList.add("hidden");
-  document.getElementById("quiz-hidden-placeholder").classList.remove("hidden");
-  document.getElementById("quiz-ipa-container").classList.remove("hidden");
-  document.getElementById("quiz-correct-label").classList.add("hidden");
-  document.getElementById("quiz-my-answer-label").classList.add("hidden");
-
-  // 게임 영역 초기화 (일반 테스트에서는 계속 숨김)
-  const choiceBox = document.getElementById("quiz-choice-container");
-  choiceBox.innerHTML = "";
-  choiceBox.classList.add("hidden");
-  document.getElementById("quiz-choice-feedback").classList.add("hidden");
+  document.getElementById("quiz-choice-container").innerHTML = "";
   document.getElementById("quiz-hidden-placeholder").textContent = quizIsGame ? GAME_PLACEHOLDER : TEST_PLACEHOLDER;
 
-  if (quizIsGame) {
+  if (kind === "game") {
     renderChoiceQuestion(current, mode);
-  } else if (mode === "en-ko") {
+  } else if (kind === "en-ko") {
     document.getElementById("quiz-question-primary").textContent = current.word;
     document.getElementById("quiz-ipa").textContent = current.ipa || "";
     document.getElementById("quiz-revealed-meaning").textContent = current.meaning;
-    // 뜻을 직접 입력 (새 문제는 키보드가 내려간 상태로 시작)
-    document.getElementById("quiz-typing-container").classList.remove("hidden");
-    document.getElementById("btn-show-answer").classList.remove("hidden");
     resetAnswerInput("뜻을 입력하세요");
     playTTS(current.word);
   } else {
     document.getElementById("quiz-question-primary").textContent = current.meaning;
-    document.getElementById("quiz-ipa-container").classList.add("hidden");
-    document.getElementById("quiz-hidden-placeholder").classList.add("hidden");
-    document.getElementById("quiz-typing-container").classList.remove("hidden");
-    document.getElementById("btn-submit-typing").classList.remove("hidden");
-
     resetAnswerInput("영단어를 입력하세요...");
-    // 새 문제는 키보드가 내려간 상태로 시작 (입력칸을 눌러 입력)
   }
 
   document.getElementById("btn-play-voice").onclick = () => playTTS(current.word);
@@ -239,7 +230,6 @@ function renderChoiceQuestion(current, mode) {
   choiceLocked = false;
   document.getElementById("quiz-question-primary").textContent = mode === "en-ko" ? current.word : current.meaning;
   document.getElementById("quiz-ipa").textContent = mode === "en-ko" ? (current.ipa || "") : "";
-  if (mode !== "en-ko") document.getElementById("quiz-ipa-container").classList.add("hidden");
   document.getElementById("quiz-revealed-meaning").textContent = mode === "en-ko" ? current.meaning : current.word;
 
   const choiceBox = document.getElementById("quiz-choice-container");
@@ -255,7 +245,7 @@ function renderChoiceQuestion(current, mode) {
     btn.dataset.correct = w === current ? "1" : "0";
     choiceBox.appendChild(btn);
   });
-  choiceBox.classList.remove("hidden");
+  showEl("quiz-choice-container", true);
 
   if (mode === "en-ko") playTTS(current.word);
 }
@@ -279,8 +269,8 @@ function pickChoice(pickedBtn, isCorrect) {
   });
 
   // 카드에 정답 공개 + 결과 문구 (한영 테스트처럼 자동 진행)
-  document.getElementById("quiz-hidden-placeholder").classList.add("hidden");
-  document.getElementById("quiz-revealed-meaning").classList.remove("hidden");
+  showEl("quiz-hidden-placeholder", false);
+  showEl("quiz-revealed-meaning", true);
   const fb = document.getElementById("quiz-choice-feedback");
   fb.className = `text-xs font-bold mt-1.5 ${isCorrect ? "text-emerald-600" : "text-rose-600"}`;
   fb.textContent = isCorrect ? "정답입니다!" : `오답! 정답: ${state.mode === "en-ko" ? current.meaning : current.word}`;
@@ -351,19 +341,16 @@ function initQuizScreen() {
     myInput.blur();   // 키보드를 내려 정답과 채점 버튼이 보이게 (잠그기 전에)
     myInput.disabled = true;
     msg.textContent = "";
-    document.getElementById("quiz-my-answer-label").classList.remove("hidden");
-    document.getElementById("quiz-correct-label").classList.remove("hidden");
-    document.getElementById("quiz-hidden-placeholder").classList.add("hidden");
-    document.getElementById("quiz-revealed-meaning").classList.remove("hidden");
-    btn.classList.add("hidden");
-    document.getElementById("quiz-self-eval-buttons").classList.remove("hidden");
+    ["quiz-my-answer-label", "quiz-correct-label", "quiz-revealed-meaning", "quiz-self-eval-buttons"].forEach(id => showEl(id, true));
+    showEl("quiz-hidden-placeholder", false);
+    showEl("btn-show-answer", false);
   }
   document.getElementById("btn-show-answer").onclick = revealEnKoAnswer;
 
   // 복습 테스트는 채점 버튼을 누르면 점수판 문구를 보여 준 뒤 넘어감 (한→영과 같게)
   function rallyEval(isCorrect) {
     if (answerTimer !== null || awaitingNext) return;
-    document.getElementById("quiz-self-eval-buttons").classList.add("hidden");
+    showEl("quiz-self-eval-buttons", false);
     if (isCorrect) rallyScored();
     else rallyDefended("");
   }
@@ -382,7 +369,7 @@ function initQuizScreen() {
     const isCorrect = validateSpelling(val, current.word);
     input.blur();   // 키보드를 내려 정답 철자와 버튼이 가려지지 않게 (잠그기 전에)
     input.disabled = true;
-    submitBtn.classList.add("hidden");
+    showEl("btn-submit-typing", false);
     playTTS(current.word);
 
     if (isCorrect) {
@@ -406,7 +393,7 @@ function initQuizScreen() {
   document.getElementById("btn-quiz-next").onclick = () => {
     if (!awaitingNext) return;
     awaitingNext = false;
-    document.getElementById("btn-quiz-next").classList.add("hidden");
+    showEl("btn-quiz-next", false);
     handleQuizAnswer(false);
   };
   input.addEventListener("keydown", (e) => {

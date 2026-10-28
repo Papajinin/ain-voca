@@ -13,12 +13,11 @@ let currentQuizSet = [];
 let currentQuizIndex = 0;
 let currentQuizDayNumber = 1;
 let quizMissedWords = [];
-let quizSource = "day";
 let answerTimer = null;
-let quizIsGame = false;      // true = 복습 게임(4지선다)
+// 지금 퀴즈 종류: "stage"(Stage 테스트) | "notebook"(오답 모아 테스트) | "game"(복습 게임 4지선다) | "rally"(복습 테스트 = 배구 역전승)
+let quizMode = "stage";
 let choiceLocked = false;    // 게임에서 보기를 한 번 누르면 잠금 (연타 방지)
 let awaitingNext = false;    // 오답 후 "다음 문제" 버튼을 기다리는 중
-let quizIsRally = false;     // true = 복습 테스트(배구 역전승)
 let rally = null;            // 복습 테스트 점수: { score, misses(단어 → 틀린 횟수), rival, line }
 
 const CORRECT_NEXT_DELAY = 3000;   // 정답 후 다음 문제까지 (ms)
@@ -57,7 +56,7 @@ function cancelPendingAnswer() {
   }
 }
 
-function startQuiz(dayNumber, source = "day", customWordList = null, isGame = false, isRally = false) {
+function startQuiz(dayNumber, mode = "stage", customWordList = null) {
   let quizSet;
   if (customWordList) {
     quizSet = [...customWordList];
@@ -67,10 +66,8 @@ function startQuiz(dayNumber, source = "day", customWordList = null, isGame = fa
   if (quizSet.length === 0) return;
 
   cancelPendingAnswer();
-  quizSource = source;
-  quizIsGame = isGame;
-  quizIsRally = isRally;
-  rally = isRally ? { score: 0, misses: new Map(), rival: pickRallyRival(), line: "" } : null;
+  quizMode = mode;
+  rally = mode === "rally" ? { score: 0, misses: new Map(), rival: pickRallyRival(), line: "" } : null;
   currentQuizDayNumber = dayNumber;
   quizMissedWords = [];
   currentQuizSet = randomShuffle(quizSet);
@@ -78,7 +75,7 @@ function startQuiz(dayNumber, source = "day", customWordList = null, isGame = fa
 
   renderQuizQuestion();
   switchView("view-quiz");
-  if (!quizIsGame) document.getElementById("quiz-spell-input").focus();
+  if (quizMode !== "game") document.getElementById("quiz-spell-input").focus();
 }
 
 function renderQuizQuestion() {
@@ -90,16 +87,16 @@ function renderQuizQuestion() {
   const pct = Math.round(((currentQuizIndex + 1) / total) * 100);
   document.getElementById("quiz-progress-bar").style.width = `${pct}%`;
   // 복습 테스트는 진행 막대 대신 점수판
-  document.getElementById("quiz-progress-wrap").style.visibility = quizIsRally ? "hidden" : "";
-  document.getElementById("quiz-progress-text").style.visibility = quizIsRally ? "hidden" : "";
-  document.getElementById("view-quiz").classList.toggle("rally-on", quizIsRally);   // 점수판만큼 카드 여백을 줄임 (style.css)
-  document.getElementById("quiz-rally-board").classList.toggle("hidden", !quizIsRally);
-  if (quizIsRally) renderRallyBoard(false);
+  document.getElementById("quiz-progress-wrap").style.visibility = quizMode === "rally" ? "hidden" : "";
+  document.getElementById("quiz-progress-text").style.visibility = quizMode === "rally" ? "hidden" : "";
+  document.getElementById("view-quiz").classList.toggle("rally-on", quizMode === "rally");   // 점수판만큼 카드 여백을 줄임 (style.css)
+  document.getElementById("quiz-rally-board").classList.toggle("hidden", quizMode !== "rally");
+  if (quizMode === "rally") renderRallyBoard(false);
 
   document.getElementById("quiz-pos-badge").textContent = `${getKoreanPos(current.pos)} · ${current.level}`;
 
   // 새 문제: 문제 종류(게임 / 영→한 입력 / 한→영 입력)에 맞는 부품만 보이기
-  const kind = quizIsGame ? "game" : mode;
+  const kind = quizMode === "game" ? "game" : mode;
   showEl("quiz-answer-container", true);
   showEl("quiz-typing-container", kind !== "game");
   showEl("btn-show-answer", kind === "en-ko");
@@ -111,7 +108,7 @@ function renderQuizQuestion() {
     "btn-quiz-next", "quiz-choice-container", "quiz-choice-feedback"].forEach(id => showEl(id, false));
   awaitingNext = false;
   document.getElementById("quiz-choice-container").innerHTML = "";
-  document.getElementById("quiz-hidden-placeholder").textContent = quizIsGame ? GAME_PLACEHOLDER : TEST_PLACEHOLDER;
+  document.getElementById("quiz-hidden-placeholder").textContent = quizMode === "game" ? GAME_PLACEHOLDER : TEST_PLACEHOLDER;
 
   if (kind === "game") {
     renderChoiceQuestion(current, mode);
@@ -127,7 +124,7 @@ function renderQuizQuestion() {
   }
 
   document.getElementById("btn-play-voice").onclick = () => playTTS(current.word);
-  if (!quizIsGame) document.getElementById("quiz-spell-input").focus();
+  if (quizMode !== "game") document.getElementById("quiz-spell-input").focus();
 }
 
 // ---------- 복습 테스트 (배구 역전승) ----------
@@ -296,13 +293,13 @@ function handleQuizAnswer(isCorrect) {
   if (!isCorrect) {
     if (!quizMissedWords.includes(current)) quizMissedWords.push(current);
     // 복습 게임의 오답은 오답노트에 넣지 않음
-    if (!quizIsGame && !state.notebook.some(w => w.word === current.word)) {
+    if (quizMode !== "game" && !state.notebook.some(w => w.word === current.word)) {
       state.notebook.push(current);
       saveState();
     }
   }
 
-  if (quizIsRally && !isCorrect) {
+  if (quizMode === "rally" && !isCorrect) {
     rally.misses.set(current, (rally.misses.get(current) || 0) + 1);
     currentQuizSet.push(currentQuizSet.splice(currentQuizIndex, 1)[0]);   // 틀린 단어는 맨 뒤로
   } else {
@@ -318,7 +315,7 @@ function handleQuizAnswer(isCorrect) {
 // 버튼·입력 연결 (main.js에서 1번 호출)
 function initQuizScreen() {
   document.getElementById("btn-quiz-exit").onclick = () => {
-    if (quizSource === "notebook") {
+    if (quizMode === "notebook") {
       renderNotebook();
       switchView("view-notebook");
     } else {
@@ -354,8 +351,8 @@ function initQuizScreen() {
     if (isCorrect) rallyScored();
     else rallyDefended("");
   }
-  document.getElementById("btn-eval-correct").onclick = () => quizIsRally ? rallyEval(true) : handleQuizAnswer(true);
-  document.getElementById("btn-eval-wrong").onclick = () => quizIsRally ? rallyEval(false) : handleQuizAnswer(false);
+  document.getElementById("btn-eval-correct").onclick = () => quizMode === "rally" ? rallyEval(true) : handleQuizAnswer(true);
+  document.getElementById("btn-eval-wrong").onclick = () => quizMode === "rally" ? rallyEval(false) : handleQuizAnswer(false);
 
   const input = document.getElementById("quiz-spell-input");
   const submitBtn = document.getElementById("btn-submit-typing");
@@ -375,12 +372,12 @@ function initQuizScreen() {
     if (isCorrect) {
       input.className = "w-full px-4 py-3 text-center text-lg font-bold rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-800 transition";
       feedback.className = "text-xs font-bold mt-2 text-emerald-600";
-      if (quizIsRally) return rallyScored();
+      if (quizMode === "rally") return rallyScored();
       feedback.textContent = `정답입니다! [${current.word}]`;
       answerTimer = setTimeout(() => { answerTimer = null; handleQuizAnswer(true); }, CORRECT_NEXT_DELAY);
     } else {
       input.className = "w-full px-4 py-3 text-center text-lg font-bold rounded-2xl border-2 border-rose-500 bg-rose-50 text-rose-800 transition";
-      if (quizIsRally) return rallyDefended(current.word);
+      if (quizMode === "rally") return rallyDefended(current.word);
       feedback.className = "text-xs font-bold mt-2 text-rose-600";
       feedback.textContent = `오답! 정답: ${current.word}`;
       waitForNextButton();
@@ -397,7 +394,7 @@ function initQuizScreen() {
     handleQuizAnswer(false);
   };
   input.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter" || quizIsGame) return;
+    if (e.key !== "Enter" || quizMode === "game") return;
     if (state.mode === "en-ko") revealEnKoAnswer();
     else processSpellingCheck();
   });

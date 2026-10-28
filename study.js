@@ -114,10 +114,10 @@ function initStudyScreen() {
   };
   // 복습 테스트: 배구 역전승 (quiz.js, 진도·챌린지 기록 없음)
   document.getElementById("btn-review-test").onclick = () => {
-    startQuiz(currentStudyDay, "day", null, false, true);
+    startQuiz(currentStudyDay, "rally");
   };
   // 복습 게임: 4지선다 (quiz.js)
   document.getElementById("btn-review-game").onclick = () => {
-    startQuiz(currentStudyDay, "day", null, true);
+    startQuiz(currentStudyDay, "game");
   };
 }

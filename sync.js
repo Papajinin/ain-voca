@@ -5,6 +5,7 @@
 //    (다른 기기에서 공부한 진도를 옛 진도로 덮어쓰지 않도록, 돌아올 때마다 클라우드를 먼저 확인)
 //  - 폰에도 예전처럼 저장(localStorage)하므로 로그인하지 않아도, 인터넷이 끊겨도 앱은 그대로 동작
 //  - 클라우드 위치: users/{로그인한 사람 uid} 문서 하나 (state 를 글자로 통째로 저장)
+//    짝맞추기 최고 기록은 같은 문서의 matchBest 칸에 따로 (받을 때 Stage마다 높은 기록을 남김)
 //  - 누가 쓸 수 있는지는 Firebase 관리 화면의 Firestore "규칙"에서 정합니다 (이메일 목록)
 // 저장 키 AIN_ENG_SYNC_META 는 "마지막으로 맞춘 시각" 같은 기록용이며 진도(state)와 별개입니다.
 // ==========================================================
@@ -155,6 +156,15 @@ function onLocalStateSaved() {
   setCloudStatus("pending");
 }
 
+// match.js 가 짝맞추기 최고 기록을 바꿀 때 부릅니다.
+// 기록은 높은 쪽이 이기도록 합치므로 진도처럼 "바뀜" 표시(dirty)는 하지 않음 → 기록 때문에 선택 창이 뜨지 않음
+function onMatchBestSaved() {
+  if (!cloudUser || !cloudReady) return;   // 못 보낸 기록은 다음에 클라우드와 맞출 때 올림
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(uploadCloudState, CLOUD_SAVE_DELAY);
+  setCloudStatus("pending");
+}
+
 function uploadCloudState() {
   clearTimeout(cloudTimer);
   cloudTimer = null;
@@ -165,6 +175,7 @@ function uploadCloudState() {
   setCloudStatus("saving");
   const p = cloudDb.collection("users").doc(uid).set({
     state: JSON.stringify(payload),
+    matchBest: JSON.stringify(loadMatchBestAll()),   // 짝맞추기 최고 기록 (진도와 따로)
     clientUpdatedAt: now,
     summary: progressSummary(payload),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -219,10 +230,16 @@ function runInitialCloudSync() {
     if (!cloudState || !isValidBackup(cloudState)) { cloudReady = true; uploadCloudState(); return; }
     const cloudAt = data.clientUpdatedAt || 0;
 
+    // 짝맞추기 최고 기록: Stage마다 높은 쪽을 남기고, 이 기기에 더 높은 기록이 있으면 올림
+    let cloudBest = {};
+    try { cloudBest = JSON.parse(data.matchBest || "{}") || {}; } catch (e) { cloudBest = {}; }
+    mergeMatchBest(cloudBest);
+    const bestToSend = hasMatchBestBeyond(cloudBest);
+
     // 2) 지난번에 이 폰에서 맞춘 뒤 클라우드가 그대로 → 폰에서 바뀐 게 있으면 올림
     if (m.uid === uid && m.lastSyncedAt === cloudAt) {
       cloudReady = true;
-      if (m.dirty) { uploadCloudState(); return; }
+      if (m.dirty || bestToSend) { uploadCloudState(); return; }
       setCloudStatus("saved");
       return;
     }
@@ -232,6 +249,7 @@ function runInitialCloudSync() {
     if (stableStringify(local) === stableStringify(cloudState)) {
       saveSyncMeta({ uid, lastSyncedAt: cloudAt, lastSavedAt: cloudAt, dirty: false });
       cloudReady = true;
+      if (bestToSend) { uploadCloudState(); return; }
       setCloudStatus("saved");
       return;
     }

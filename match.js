@@ -6,7 +6,8 @@
 // - 판마다 12장을 3초 동안 보여 주고 뒤집음. 시간은 멈추지 않음
 // - 5쌍을 찾으면 그 판은 끝(마지막 2장은 저절로 알게 되므로). 남은 1쌍은 짝으로 세지 않고
 //   다음 판에 꼭 들어감 → 남은 단어 + 새 단어 5개로 새 판
-// - 진도·챌린지·오답노트에는 반영하지 않음. Stage별 최고 기록만 이 기기에 저장
+// - 진도·챌린지·오답노트에는 반영하지 않음. Stage별 최고 기록은 따로 저장하고
+//   텍스트 백업·클라우드에 함께 담음 (합칠 때는 Stage마다 높은 기록을 남김)
 // ==========================================================
 
 const MATCH_TIME = 90;          // 제한 시간(초)
@@ -31,14 +32,41 @@ function matchBestKey() {
   return `${state.selectedLevel}|${state.selectedPosGroup}|${state.wordsPerDay}|${currentStudyDay}`;
 }
 function getMatchBest() {
-  try { return JSON.parse(localStorage.getItem(MATCH_BEST_KEY) || "{}")[matchBestKey()] ?? null; } catch (e) { return null; }
+  return loadMatchBestAll()[matchBestKey()] ?? null;
 }
 function setMatchBest(n) {
+  const all = loadMatchBestAll();
+  all[matchBestKey()] = n;
+  try { localStorage.setItem(MATCH_BEST_KEY, JSON.stringify(all)); } catch (e) {}
+  if (typeof onMatchBestSaved === "function") onMatchBestSaved(); // 클라우드 자동 저장 (sync.js)
+}
+
+// 최고 기록 전체 { "A1|noun|10|3": 12, ... } — 텍스트 백업·클라우드에도 함께 담음
+function loadMatchBestAll() {
   try {
     const all = JSON.parse(localStorage.getItem(MATCH_BEST_KEY) || "{}");
-    all[matchBestKey()] = n;
-    localStorage.setItem(MATCH_BEST_KEY, JSON.stringify(all));
-  } catch (e) {}
+    return all && typeof all === "object" && !Array.isArray(all) ? all : {};
+  } catch (e) { return {}; }
+}
+
+// 백업·클라우드에서 받은 기록을 합침: Stage마다 더 높은 기록을 남김 (이상한 값은 버림)
+function mergeMatchBest(other) {
+  if (!other || typeof other !== "object" || Array.isArray(other)) return;
+  const all = loadMatchBestAll();
+  let changed = false;
+  Object.keys(other).forEach(k => {
+    const n = other[k];
+    if (!Number.isInteger(n) || n <= 0) return;
+    if (all[k] === undefined || n > all[k]) { all[k] = n; changed = true; }
+  });
+  if (changed) try { localStorage.setItem(MATCH_BEST_KEY, JSON.stringify(all)); } catch (e) {}
+}
+
+// 이 기기에만 있거나 더 높은 기록이 있는지 (있으면 클라우드에 올려야 함)
+function hasMatchBestBeyond(other) {
+  const o = other && typeof other === "object" ? other : {};
+  const all = loadMatchBestAll();
+  return Object.keys(all).some(k => Number.isInteger(all[k]) && all[k] > 0 && !(o[k] >= all[k]));
 }
 
 function matchBoardPairs() { return studyWords.length <= 10 ? Math.min(5, studyWords.length) : 6; }

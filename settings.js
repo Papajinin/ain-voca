@@ -72,7 +72,9 @@ function initSettingsScreen() {
   };
 
   document.getElementById("btn-export-data").onclick = () => {
-    const jsonStr = JSON.stringify(state);
+    // 짝맞추기 최고 기록은 진도(state)와 따로 저장돼 있어서 백업 글자에만 붙임
+    const best = loadMatchBestAll();
+    const jsonStr = JSON.stringify(Object.keys(best).length ? { ...state, matchBest: best } : state);
     navigator.clipboard.writeText(jsonStr).then(() => {
       alert("진도 데이터가 클립보드에 복사되었습니다!\n메모장 등에 보관해 두세요.");
     }).catch(() => {
@@ -86,12 +88,15 @@ function initSettingsScreen() {
     try {
       const parsed = JSON.parse(input);
       if (!isValidBackup(parsed)) throw new Error("invalid backup");
+      const matchBest = parsed.matchBest; // 진도(state)에는 넣지 않고 기록 저장소에 합침
+      delete parsed.matchBest;
       if (Array.isArray(parsed.notebook)) {
         parsed.notebook = parsed.notebook
           .map(n => n && allWords.find(w => w.word === n.word && w.pos === normalizePosTag(n.pos)))
           .filter(Boolean);
       }
       state = { ...state, ...parsed };
+      mergeMatchBest(matchBest);
       saveState();
       alert("진도가 완벽하게 복원되었습니다!");
       location.reload();

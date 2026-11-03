@@ -363,8 +363,24 @@ function pickPuzzleTile(mk, index) {
 }
 
 // ---------- 이미지 보기 (화면 전체, 비율 유지한 최대 크기) ----------
+// 폰을 세워 들고 있는데 그림이 가로로 길면 90도 돌려서 더 크게 (화면 회전 잠금이 켜져 있어도 폰만 돌리면 크게 보임)
+// 돌린 판도 화면 정가운데 (부모가 가운데 정렬, 돌리는 중심도 판의 가운데)
 function renderPuzzleFullscreen() {
-  renderPuzzleBoard(document.getElementById("puzzle-board-full"), puzzleMonth, { maxHeight: window.innerHeight });
+  const board = document.getElementById("puzzle-board-full");
+  const W = window.innerWidth, H = window.innerHeight;
+  loadPuzzleImage(puzzleMonth, (img) => {
+    const rotate = img.w > img.h && H > W;
+    renderPuzzleBoard(board, puzzleMonth, { maxHeight: rotate ? W - 16 : H });
+    if (rotate) {
+      // 돌리기 전 기준: 판 가로는 화면 세로까지, 판 세로는 화면 가로까지 (가장자리에 조금 여백)
+      board.style.width = `${Math.floor(Math.min(H - 24, (W - 16) * img.w / img.h))}px`;
+      board.style.flexShrink = "0";
+      board.style.transform = "rotate(90deg)";
+    } else {
+      board.style.flexShrink = "";
+      board.style.transform = "";
+    }
+  });
 }
 function openPuzzleFullscreen() {
   document.getElementById("puzzle-fullscreen").classList.remove("hidden");

@@ -345,6 +345,11 @@ function renderPuzzleViewer() {
     highlight: true
   });
 
+  // 이전·다음 달 버튼: 챌린지 시작한 달 ~ 이번 달. 조각 고르는 중에는 숨김
+  const v = { y: Number(mk.split("-")[0]), m }, t = todayParts(), busy = puzzlePicking();
+  document.getElementById("btn-puzzle-prev").style.visibility = !busy && monthDiff(v, challengeStart()) > 0 ? "visible" : "hidden";
+  document.getElementById("btn-puzzle-next").style.visibility = !busy && monthDiff(t, v) > 0 ? "visible" : "hidden";
+
   document.getElementById("btn-puzzle-back").classList.toggle("hidden", pending > 0);
   document.getElementById("puzzle-pick-lock").classList.toggle("hidden", pending === 0);
 }
@@ -359,6 +364,19 @@ function pickPuzzleTile(mk, index) {
   if (c.pending[mk] <= 0) delete c.pending[mk];
   puzzleJustOpened = index;
   saveState();
+  renderPuzzleViewer();
+}
+
+// 크게 보기에서 이전·다음 달로 (버튼, 스와이프). 챌린지 달력도 같은 달로 → 돌아가면 보던 달
+function puzzlePicking() { return Object.values(state.challenge.pending).some(n => n > 0); }
+function movePuzzleMonth(d) {
+  if (puzzlePicking()) return;
+  const [y, m] = puzzleMonth.split("-").map(Number);
+  const v = m + d < 1 ? { y: y - 1, m: 12 } : m + d > 12 ? { y: y + 1, m: 1 } : { y, m: m + d };
+  if (monthDiff(v, challengeStart()) < 0 || monthDiff(todayParts(), v) < 0) return;
+  puzzleMonth = monthKeyOf(v.y, v.m);
+  puzzleJustOpened = -1;
+  challengeView = v;
   renderPuzzleViewer();
 }
 
@@ -410,6 +428,18 @@ function initChallengeScreen() {
   };
 
   document.getElementById("btn-puzzle-back").onclick = () => openChallenge();
+  document.getElementById("btn-puzzle-prev").onclick = () => movePuzzleMonth(-1);
+  document.getElementById("btn-puzzle-next").onclick = () => movePuzzleMonth(1);
+  // 퍼즐 판을 왼쪽으로 밀면 다음 달, 오른쪽으로 밀면 이전 달 (사진 앱과 같은 방향)
+  const swipeArea = document.getElementById("puzzle-board-large").parentElement;
+  let sx = null, sy = 0;
+  swipeArea.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  swipeArea.addEventListener("touchend", (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    sx = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) movePuzzleMonth(dx < 0 ? 1 : -1);
+  }, { passive: true });
   document.getElementById("btn-puzzle-fullscreen").onclick = () => openPuzzleFullscreen();
   document.getElementById("btn-puzzle-fullscreen-close").onclick = () => closePuzzleFullscreen();
 

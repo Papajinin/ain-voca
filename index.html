@@ -16,7 +16,7 @@
   <script>
     // 새 버전 스스로 받기 (Todo·Cost·Days·Line과 같음): 켤 때 서버의 version.txt 숫자가 아래 APP_VERSION보다 크면
     // 새 화면 파일을 받아 한 번 새로고침. 올릴 때마다 두 숫자를 같이 올린다
-    const APP_VERSION = 9;
+    const APP_VERSION = 10;
     (function () {
       const t0 = Date.now();
       const key = 'ainVoca.updated'; // 같은 버전으로 두 번 새로고침하지 않게
@@ -162,7 +162,11 @@
     <!-- 0-1. 퍼즐 크게 보기 · 조각 고르기 (challenge.js) -->
     <main id="view-puzzle" class="flex-1 px-5 pt-1 flex flex-col space-y-4 hidden fade-in">
       <div class="flex items-center justify-between">
-        <h2 id="puzzle-title" class="text-xl font-black tracking-tight">이달의 퍼즐</h2>
+        <div class="flex items-center space-x-2">
+          <button id="btn-puzzle-prev" class="w-8 h-8 rounded-xl theme-card border theme-border flex items-center justify-center active:scale-90 transition" aria-label="이전 달 퍼즐"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+          <h2 id="puzzle-title" class="text-xl font-black tracking-tight">이달의 퍼즐</h2>
+          <button id="btn-puzzle-next" class="w-8 h-8 rounded-xl theme-card border theme-border flex items-center justify-center active:scale-90 transition" aria-label="다음 달 퍼즐"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+        </div>
         <span class="text-xs font-bold theme-badge px-2.5 py-1 rounded-full"><i class="fa-solid fa-puzzle-piece mr-1"></i><span id="puzzle-count">0/35</span></span>
       </div>
       <div class="theme-card rounded-2xl border theme-border p-3">
@@ -689,7 +693,7 @@
   <script src="./quiz.js?v=13"></script>
   <script src="./result.js?v=12"></script>
   <script src="./notebook.js?v=1"></script>
-  <script src="./challenge.js?v=12"></script>
+  <script src="./challenge.js?v=13"></script>
   <script src="./settings.js?v=5"></script>
   <!-- 클라우드 자동 저장: Firebase(구글) 프로그램 → sync.js. 인터넷이 없어 못 받아 와도 앱은 폰 저장으로 동작 -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

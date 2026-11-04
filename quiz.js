@@ -295,6 +295,7 @@ function handleQuizAnswer(isCorrect) {
     // 복습 게임의 오답은 오답노트에 넣지 않음
     if (quizMode !== "game" && !state.notebook.some(w => w.word === current.word)) {
       state.notebook.push(current);
+      logToday().nb++;
       saveState();
     }
   }

@@ -109,6 +109,7 @@ function challengeCreditForDay(level, group, day, wasCleared) {
   if (c.days[target]) return null;   // 오늘 칸도 이미 채움
 
   c.days[target] = true;
+  logToday().ch.push(target);
   const { y, m, d } = parseDateKey(target);
   const mk = monthKeyOf(y, m);
   const earned = tilesForDate(y, m, d);
@@ -360,6 +361,7 @@ function pickPuzzleTile(mk, index) {
   const opened = c.tiles[mk] || (c.tiles[mk] = []);
   if (opened.includes(index)) return;
   opened.push(index);
+  logToday().tl++;
   c.pending[mk] -= 1;
   if (c.pending[mk] <= 0) delete c.pending[mk];
   puzzleJustOpened = index;

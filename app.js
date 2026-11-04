@@ -72,7 +72,10 @@ let state = {
     pending: {},       // 달별로 아직 고르지 않은 조각 수 { "2026-10": 1 }
     filling: null,     // 지금 채우는 중인 날짜 ("2026-10-12"), 없으면 오늘
     catchUpDone: false // 지난 진도 한 번 정산을 했는지 (challenge.js 의 runChallengeCatchUp)
-  }
+  },
+  // 날짜별 한 일 (아빠 진도 보기용, 화면에는 안 보임)
+  // "2026-11-04": { st: [클리어한 Stage 키], nb: 오답노트에 넣은 단어 수, ch: [채운 챌린지 날짜], tl: 연 퍼즐 조각 수 }
+  dailyLog: {}
 };
 
 let allWords = [];
@@ -140,6 +143,13 @@ function isValidBackup(p) {
   if ("selectedLevel" in p && !["A1", "A2", "B1", "B2", "C1"].includes(p.selectedLevel)) return false;
   if ("challenge" in p && !isPlainObject(p.challenge)) return false;
   return true;
+}
+
+// 오늘 한 일 칸 (없으면 만듦). 날짜는 이 기기 시간 기준 (challenge.js 의 todayKey)
+function logToday() {
+  if (!state.dailyLog || typeof state.dailyLog !== "object") state.dailyLog = {};
+  const k = todayKey();
+  return state.dailyLog[k] || (state.dailyLog[k] = { st: [], nb: 0, ch: [], tl: 0 });
 }
 
 function saveState() {

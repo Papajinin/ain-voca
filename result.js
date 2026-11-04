@@ -84,6 +84,8 @@ function stageClearResult() {
   const clearKey = getClearKey(state.mode, state.selectedLevel, state.selectedPosGroup, currentQuizDayNumber);
   const wasCleared = !!state.clearedDays[clearKey];
   state.clearedDays[clearKey] = true;
+  const log = logToday();
+  if (!log.st.includes(clearKey)) log.st.push(clearKey);
   saveState();
 
   // 데일리 챌린지: 이 Day의 영→한·한→영이 방금 모두 클리어됐으면 칸 채우기
